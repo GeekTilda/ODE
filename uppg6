@@ -1,0 +1,111 @@
+import numpy as np
+from rungeKutta4th import rungeKutta4th  # Importera din förbättrade Runge-Kutta 4th funktion
+from decimal import Decimal, getcontext  # Importera Decimal
+
+# Ställ in precisionen för Decimal
+getcontext().prec = 50  # Öka precisionen till 50 decimaler för maximal noggrannhet
+
+# Definiera funktionen som representerar systemet
+def dudx6(x, y, u):
+    dydx = u    # u = y'
+    dudx = -y   # y'' = -y
+    return dydx, dudx
+
+# Initialvillkor
+x0 = Decimal(0)  # Startpunkt
+y0 = Decimal(1)  # y(0) = 1
+u0 = Decimal(0)  # y'(0) = 0
+h = Decimal(0.000001)  # Mindre steglängd för bättre precision
+xend = Decimal(7.9)  # Sökning upp till t = 7.9
+n = int(xend / h)  # Antal steg
+
+# Använd den förbättrade Runge-Kutta 4th för att lösa differentialekvationen
+x, y, u = rungeKutta4th(dudx6, x0, y0, u0, h, n)
+
+# Funktion för att hitta nollstället
+def func(t):
+    index = int(t / h)
+    if index < len(y):
+        return Decimal(y[index])
+    return Decimal(0)
+
+# Approximation av derivatan med finita skillnader
+def derivative_func(t):
+    index = int(t / h)
+    if index < len(y) - 1:
+        return (Decimal(y[index + 1]) - Decimal(y[index])) / h
+    return Decimal(0)
+
+# Bisection-metoden
+def bisection_method(a, b, max_iterations=20000, tolerance=1e-15):
+    if func(a) * func(b) >= 0:
+        print("Tecknen för f(a) och f(b) måste vara olika.")
+        return None
+    
+    for _ in range(max_iterations):
+        c = (a + b) / 2
+        f_c = func(c)
+        
+        if abs(f_c) < tolerance:
+            return c
+        
+        if func(a) * f_c < 0:
+            b = c
+        else:
+            a = c
+
+    print("Maximala iterationer nådda utan konvergens.")
+    return (a + b) / 2
+
+# Uppdaterad Newton-Raphsons metod med fler iterationer och central differens för derivatan
+def newton_method(initial_guess, max_iterations=2000, tolerance=1e-20):
+    x_n = Decimal(initial_guess)
+
+    for iteration in range(max_iterations):
+        f_x_n = func(x_n)
+        f_prime_x_n = derivative_func_central(x_n)
+
+        if f_prime_x_n == 0:
+            print("Derivatan är noll, ingen lösning.")
+            return None
+
+        step_size = f_x_n / f_prime_x_n
+        x_n1 = x_n - step_size
+
+        print(f"Iteration {iteration}: x_n={x_n:.15f}, f(x_n)={f_x_n:.15f}, f'(x_n)={f_prime_x_n:.15f}")
+
+        if abs(f_x_n) < tolerance:
+            return x_n1
+        
+        x_n = x_n1
+
+    print("Maximala iterationer nådda utan konvergens.")
+    return x_n
+
+# Central differens för att bättre approximera derivatan f'(x)
+def derivative_func_central(t):
+    h_small = Decimal('1e-10')  # Väldigt liten steglängd för central differens
+    return (func(t + h_small) - func(t - h_small)) / (2 * h_small)
+
+
+# Kör bisection-metoden för att hitta ett bättre startvärde
+a = Decimal(4.71)
+b = Decimal(4.72)
+
+t_zero_bisection = bisection_method(a, b)
+
+# Kör Newton-Raphsons metod efter bisection
+if t_zero_bisection is not None:
+    initial_guess = t_zero_bisection
+    t_zero_newton = newton_method(initial_guess)
+
+    # Använd t_zero_newton för att uppskatta π
+    if t_zero_newton is not None:
+        pi_approx_newton = (Decimal(t_zero_newton) * Decimal(2)) / Decimal(3)
+        print(f"Uppskattat värde av π: {pi_approx_newton:.30f}")
+        print("Rätt värde av π:       3.14159265358979323846")
+        print("Differens: ", (float(pi_approx_newton) - 3.14159265358979323846))
+    else:
+        print("Kunde inte hitta nollstället med Newtons metod.")
+else:
+    print("Kunde inte hitta nollstället med bisection-metoden.")
