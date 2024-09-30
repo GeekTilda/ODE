@@ -6,7 +6,7 @@ getcontext().prec = 25
 x0 = Decimal(0)
 y0 = Decimal(1)
 u0 = Decimal(0)
-h = Decimal(0.1)
+h = Decimal(0.001)
 tol = Decimal(1e-20)
 
 xPrev = x0
