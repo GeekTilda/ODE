@@ -1,4 +1,7 @@
 import math
+from decimal import Decimal, getcontext
+
+getcontext().prec = 25
 
 def euler(x, yVec, h):
     y = [None]*2
@@ -9,11 +12,11 @@ def euler(x, yVec, h):
 
 def main():
     itertation = 1
-    piApprox = 3
-    while abs(piApprox - math.pi) > 1e-20:
-        h = 1/(2**itertation)
-        yVec = [1,0]
-        x = 0
+    piApprox = Decimal(3)
+    while abs(piApprox - Decimal(math.pi)) > 1e-13:
+        h = Decimal(1/(2**itertation))
+        yVec = [Decimal(1),Decimal(0)]
+        x = Decimal(0)
         while yVec[0] > 0:
             prevX = x
             prevYVec = yVec
@@ -23,6 +26,6 @@ def main():
         piApprox = -2*m/k
         print(piApprox)
         itertation += 1
-    print(abs(math.pi-piApprox))
+    print(abs(Decimal(math.pi)-piApprox))
 
 main()
