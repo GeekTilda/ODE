@@ -10,11 +10,7 @@ y = Decimal(1)
 u = Decimal(0)
 h = Decimal(0.01)
 tol = Decimal(1e-20)
-
-xPrev = x
-yPrev = y
-uPrev = u
-
+approxPiPrev = Decimal(3)
 
 # Represents the system y'' = -y
 def dudx6(x, y, u):
@@ -30,7 +26,7 @@ while True:
     k3 = dudx6(x + h / 2, y + h * k2[0] / 2, u + h * k2[1] / 2)
     k4 = dudx6(x + h, y + h * k3[0], u + h * k3[1])
 
-    # Saving previous x, y and u
+    # Saving our previous solution
     xPrev = x
     yPrev = y
     uPrev = u
@@ -42,17 +38,18 @@ while True:
 
     # Checking when y passes 0
     if y < 0:
-        approxPi = 2*x
+        approxPi = 2*xPrev
 
         if abs(approxPi - Decimal(math.pi)) < tol:
-            print("Converged result: ", str(approxPi) + " ± " + str(abs(approxPi - Decimal(math.pi))))
+            print("Converged result: ", approxPi,"±",abs(approxPi - Decimal(math.pi)))
             break
         
-        # Returning to previous x, y and u values and making our steps 1/2 as big
-        x = xPrev 
+        # Making our steps 1/2 as big
+        h /= 2
+        x = xPrev
         y = yPrev
         u = uPrev
-        h = h / 2
+
         continue
 
 '''
