@@ -1,8 +1,9 @@
-import numpy as np
 from decimal import Decimal, getcontext
+import math
+from rungeKutta4th import rungeKutta4th
 
 # Ställ in precisionen för Decimal
-getcontext().prec = 50
+getcontext().prec = 50  # Öka precisionen för mer noggranna beräkningar
 
 # Definiera funktionen som representerar systemet
 def dudx6(x, y, u):
@@ -14,10 +15,17 @@ def dudx6(x, y, u):
 x0 = Decimal(0)  # Startpunkt
 y0 = Decimal(1)  # y(0) = 1
 u0 = Decimal(0)  # y'(0) = 0
-h = Decimal(0.000001)  # Värde för steglängd
+h = Decimal(0.1)  # Minska värdet för steglängd
 xend = Decimal(7.9)  # Sökning upp till t = 7.9
-n = int(xend / h)  # Antal steg
+tol = 1e-20
 
+pi = rungeKutta4th(dudx6,x0,y0,u0,h,xend,tol)
+
+print(f"Uppskattat värde av π: {pi:.25f}")
+print("Rätt värde av π:       3.14159265358979323846")
+print("Differens: ", (float(pi) - 3.14159265358979323846))
+
+'''
 # Euler's metod
 def euler_method(f, x0, y0, u0, h, n):
     x = [x0]
@@ -54,7 +62,7 @@ def derivative_func(t):
     return Decimal(0)
 
 # Bisection-metoden
-def bisection_method(a, b, max_iterations=200000, tolerance=1e-20):
+def bisection_method(a, b, max_iterations=20000, tolerance=1e-40):
     if func(a) * func(b) >= 0:
         print("Tecknen för f(a) och f(b) måste vara olika.")
         return None
@@ -74,53 +82,41 @@ def bisection_method(a, b, max_iterations=200000, tolerance=1e-20):
     print("Maximala iterationer nådda utan konvergens.")
     return (a + b) / 2
 
-# Justera toleransen temporärt
-temporary_tolerance = 1e-6  # Temporär högre tolerans för de första iterationerna
-
-# Newton-Raphsons metod med temporär högre tolerans
-def newton_method_with_temp_tolerance(initial_guess, max_iterations=200000):
+def newton_method_with_logging(initial_guess, max_iterations=20000, tolerance=1e-20):
     x_n = Decimal(initial_guess)
 
     for iteration in range(max_iterations):
         f_x_n = func(x_n)
         f_prime_x_n = derivative_func(x_n)
 
+        print(f"Iteration {iteration}: x_n={x_n:.25f}, f(x_n)={f_x_n:.25f}, f'(x_n)={f_prime_x_n:.25f}")
+
         if f_prime_x_n == 0:
             print("Derivatan är noll, ingen lösning.")
             return None
 
-        # Dynamisk justering av steglängden
+        # Dynamisk justering av steglängd
         step_size = f_x_n / f_prime_x_n
-        adjusted_step_size = step_size if abs(step_size) < Decimal(0.01) else step_size * Decimal(0.5)
+        x_n1 = x_n - step_size
 
-        x_n1 = x_n - adjusted_step_size
-
-        # Skriv ut med hög precision
-        print(f"Iteration {iteration}: x_n={x_n:.25f}, f(x_n)={f_x_n:.25f}, f'(x_n)={f_prime_x_n:.25f}, adjusted_step_size={adjusted_step_size:.25f}")
-
-        # Använd tillfällig tolerans under de första 50 iterationerna
-        if iteration < 50 and abs(f_x_n) < temporary_tolerance:
+        if abs(f_x_n) < tolerance:
             return x_n1
-        
-        if abs(f_x_n) < temporary_tolerance:
-            return x_n1
-        
+
         x_n = x_n1
 
     print("Maximala iterationer nådda utan konvergens.")
     return x_n
 
-
-# Använd bisection-metoden för att hitta ett nollställe först
-a = Decimal(4.6)  # Justera detta intervall
-b = Decimal(4.72)
+# Använd bisection-metoden för att hitta ett nollställe nära pi/2
+a = Decimal(math.pi) / 2 - Decimal(0.1)  # Justera detta intervall
+b = Decimal(math.pi) / 2 + Decimal(0.1)
 
 t_zero_bisection = bisection_method(a, b)
 
 # Använd t_zero_bisection för att starta Newtons metod
 if t_zero_bisection is not None:
     initial_guess = t_zero_bisection
-    t_zero_newton = newton_method_with_temp_tolerance(initial_guess)
+    t_zero_newton = newton_method_with_logging(initial_guess)
 
     # Använd t_zero_newton för att uppskatta π
     if t_zero_newton is not None:
@@ -132,3 +128,4 @@ if t_zero_bisection is not None:
         print("Kunde inte hitta nollstället med Newtons metod.")
 else:
     print("Kunde inte hitta nollstället med bisection-metoden.")
+'''
