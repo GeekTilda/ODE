@@ -8,14 +8,14 @@ getcontext().prec = 50  # How many decimals we want
 x = Decimal(0)
 y = Decimal(1)
 u = Decimal(0)
-h = Decimal(0.01)
+h = Decimal(0.000001)
 tol = Decimal(1e-20)
 
 
 # Represents the system y'' = -y
 def dudx6(y, u):
-    dydx = u    # y' = u
-    dudx = -y   # y'' = -y
+    dydx = Decimal(u)    # y' = u
+    dudx = -Decimal(y)   # y'' = -y
     return dydx, dudx
 
 
@@ -26,35 +26,30 @@ while True:
     #uPrev = u
 
     # Runge-Kutta algorithm
-    k1 = dudx6(y, u)
-    k2 = dudx6(y + h * k1[0] / 2, u + h * k1[1] / 2)
-    k3 = dudx6(y + h * k2[0] / 2, u + h * k2[1] / 2)
-    k4 = dudx6(y + h * k3[0], u + h * k3[1])
+    k1 = dudx6(Decimal(y), Decimal(u))
+    k2 = dudx6(Decimal(y) + Decimal(h) * Decimal(k1[0]) / Decimal(2), Decimal(u) + Decimal(h) * Decimal(k1[1]) / Decimal(2))
+    k3 = dudx6(Decimal(y) + Decimal(h) * Decimal(k2[0]) / Decimal(2), Decimal(u) + Decimal(h) * Decimal(k2[1]) / Decimal(2))
+    k4 = dudx6(Decimal(y) + Decimal(h) * Decimal(k3[0]), Decimal(u) + Decimal(h) * Decimal(k3[1]))
 
     # Updating x, y and u
-    x = x + h
-    y = y + h * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6
-    u = u + h * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) / 6
+    x = Decimal(x) + Decimal(h)
+    y = Decimal(y) + Decimal(h) * (Decimal(k1[0]) + Decimal(2) * Decimal(k2[0]) + Decimal(2) * Decimal(k3[0]) + Decimal(k4[0])) / Decimal(6)
+    u = Decimal(u) + Decimal(h) * (Decimal(k1[1]) + Decimal(2) * Decimal(k2[1]) + Decimal(2) * Decimal(k3[1]) + Decimal(k4[1])) / Decimal(6)
 
     # Checking when y passes 0
     if y < 0:
-        approxPi = 2 * (x - h)
-        print(approxPi)
-        print(abs(approxPi - Decimal(math.pi)))
+        approxPi = Decimal(2) * (Decimal(x) - Decimal(h))
 
-        if abs(approxPi - Decimal(math.pi)) < tol:
-            print("Converged result: ", approxPi,"±",abs(approxPi - Decimal(math.pi)))
+        if abs(Decimal(approxPi) - Decimal(3.14159265358979323846)) < tol:
+            print("Converged result: ", approxPi,"±",abs(approxPi - Decimal(3.14159265358979323846)))
             break
         
         # Returning to old values
-        x = x - h
-        y = y - h * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6
-        u = u - h * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) / 6
+        x = Decimal(x) - Decimal(h)
+        y = Decimal(y) - Decimal(h) * (Decimal(k1[0]) + Decimal(2) * Decimal(k2[0]) + Decimal(2) * Decimal(k3[0]) + Decimal(k4[0])) / Decimal(6)
+        u = Decimal(u) - Decimal(h) * (Decimal(k1[1]) + Decimal(2) * Decimal(k2[1]) + Decimal(2) * Decimal(k3[1]) + Decimal(k4[1])) / Decimal(6)
+
 
         # Making our steps 1/2 as big
-        h /= 2
+        h /= Decimal(2)
         continue
-
-'''
-3.141592653589793115997963
-'''
