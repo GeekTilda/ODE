@@ -1,122 +1,107 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Constants
-G = 6.67430e-11      # Gravitational constant
-MSun = 1.989e30      # Mass of the Sun
-MEarth = 5.972e24    # Mass of Earth
-MJupiter = 1.898e27  # Mass of Jupiter
+# Konstant
+G = 6.67430e-11  # Gravitationskonstant
+MSun = 1.989e30  # Solens massa
+MJupiter = 1.898e27  # Jupiters massa
+MEarth = 5.972e24  # Jordens massa
+AU = 1.496e11  # 1 AU i meter
 
-AU = 1.496e11        # Astronomical unit (meters)
-earthRadius = 6.371e6  # Earth's radius (meters)
-jupiterOrbit = 5.2 * AU  # Average distance of Jupiter from the Sun
+# Initiala positioner och hastigheter
+x_sun, y_sun = 0, 0  # Solens position
+x_jupiter, y_jupiter = 5.2 * AU, 0  # Jupiters position
+vx_jupiter, vy_jupiter = 0, 13000  # Jupiters hastighet (ca 13 km/s)
+x_earth, y_earth = AU, 0  # Jordens position
+vx_earth, vy_earth = 0, 29780  # Jordens hastighet
 
-# Initial positions and velocities
-xEarth0 = 1 * AU
-yEarth0 = 0
-vxEarth0 = 0
-vyEarth0 = 29780  # Earth's velocity around the Sun (m/s)
+# Rymdskeppets initiala värden
+x0 = x_earth + 1e7  # Lite utanför jordens position
+y0 = 1e6  # Lite ovanför x-axeln
+vx0 = 0  # Start hastighet
+vy0 = 40000  # Initiera hastighet för att simuleras
 
-xJupiter0 = jupiterOrbit
-yJupiter0 = 0
-vxJupiter0 = 0
-vyJupiter0 = 13720  # Jupiter's velocity around the Sun (m/s)
+# Tidssteg och total tid
+dt = 60 * 60  # 1 timme i sekunder
+totalTime = 5 * 365.25 * 24 * 60 * 60  # 5 år i sekunder
 
-# Spaceship starts in low Earth orbit (400 km above Earth's surface)
-xShip0 = xEarth0
-yShip0 = earthRadius + 400000  # 400 km above the Earth's surface
-
-# Set the initial velocity for a stable low Earth orbit
-v_low_earth_orbit = np.sqrt(G * MEarth / (earthRadius + 400000))  # Orbital speed for LEO
-vxShip0 = v_low_earth_orbit  # Add this speed for a circular orbit around Earth
-vyShip0 = vxShip0/2  # No vertical speed
-
-# Time step
-dt = 30* 60  # 1 minute time step
-totalTime = 3 * 365.25 * 24 * 60 * 60  # Simulate for 30 years in seconds
-
-# Function to calculate the acceleration due to gravity
-def acceleration(x, y, xOther, yOther, MOther):
-    r = np.sqrt((x - xOther)**2 + (y - yOther)**2)
-    ax = -G * MOther * (x - xOther) / r**3
-    ay = -G * MOther * (y - yOther) / r**3
+def acceleration(x, y, x_target, y_target, mass_target):
+    r = np.sqrt((x - x_target)**2 + (y - y_target)**2)
+    ax = -G * mass_target * (x - x_target) / r**3
+    ay = -G * mass_target * (y - y_target) / r**3
     return ax, ay
 
-
-# Runge-Kutta integration for multiple bodies
-def rungeKuttaSystem(xShip0, yShip0, vxShip0, vyShip0, xEarth0, yEarth0, vxEarth0, vyEarth0, xJupiter0, yJupiter0, vxJupiter0, vyJupiter0, dt, totalTime):
+# Euler-Bakåt metod med rörliga kroppar
+def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupiter, y_jupiter, vx_jupiter, vy_jupiter):
     nSteps = int(totalTime / dt)
+    x = np.zeros(nSteps)
+    y = np.zeros(nSteps)
+    vx = np.zeros(nSteps)
+    vy = np.zeros(nSteps)
     
-    # Preallocate memory for positions and velocities
-    xShip = np.zeros(nSteps)
-    yShip = np.zeros(nSteps)
-    vxShip = np.zeros(nSteps)
-    vyShip = np.zeros(nSteps)
-    
-    xEarth = np.zeros(nSteps)
-    yEarth = np.zeros(nSteps)
-    vxEarth = np.zeros(nSteps)
-    vyEarth = np.zeros(nSteps)
-    
-    xJupiter = np.zeros(nSteps)
-    yJupiter = np.zeros(nSteps)
-    vxJupiter = np.zeros(nSteps)
-    vyJupiter = np.zeros(nSteps)
-    
-    # Initial conditions
-    xShip[0], yShip[0], vxShip[0], vyShip[0] = xShip0, yShip0, vxShip0, vyShip0
-    xEarth[0], yEarth[0], vxEarth[0], vyEarth[0] = xEarth0, yEarth0, vxEarth0, vyEarth0
-    xJupiter[0], yJupiter[0], vxJupiter[0], vyJupiter[0] = xJupiter0, yJupiter0, vxJupiter0, vyJupiter0
+    # Jupiters position och hastighet
+    x_jup = x_jupiter
+    y_jup = y_jupiter
+    vx_jup = vx_jupiter
+    vy_jup = vy_jupiter
 
-    # Runge-Kutta integration loop
+    # Skapa arrayer för Jupiters positioner
+    x_jupiter_array = np.zeros(nSteps)
+    y_jupiter_array = np.zeros(nSteps)
+
+    # Initialisering av positioner och hastigheter
+    x[0], y[0], vx[0], vy[0] = x0, y0, vx0, vy0
+    x_jupiter_array[0], y_jupiter_array[0] = x_jup, y_jup
+
+    # Simulera rörelse
     for i in range(1, nSteps):
-        # For the spaceship
-        # Calculate acceleration from the Sun, Earth, and Jupiter
-        axSun, aySun = acceleration(xShip[i-1], yShip[i-1], 0, 0, MSun)  # From Sun
-        axEarth, ayEarth = acceleration(xShip[i-1], yShip[i-1], xEarth[i-1], yEarth[i-1], MEarth)  # From Earth
-        axJupiter, ayJupiter = acceleration(xShip[i-1], yShip[i-1], xJupiter[i-1], yJupiter[i-1], MJupiter)  # From Jupiter
+        # Beräkna accelerationen för Jupiters position
+        ax_jup, ay_jup = acceleration(x_jup, y_jup, x_sun, y_sun, MSun)
 
-        # Combine accelerations for the ship
-        axTotal = axSun + axEarth + axJupiter
-        ayTotal = aySun + ayEarth + ayJupiter
+        # Uppdatera Jupiters hastighet och position
+        vx_jup += ax_jup * dt
+        vy_jup += ay_jup * dt
+        x_jup += vx_jup * dt
+        y_jup += vy_jup * dt
 
-        # Update ship's velocity and position
-        vxShip[i] = vxShip[i-1] + axTotal * dt
-        vyShip[i] = vyShip[i-1] + ayTotal * dt
-        xShip[i] = xShip[i-1] + vxShip[i-1] * dt
-        yShip[i] = yShip[i-1] + vyShip[i-1] * dt
+        # Spara Jupiters position i arrays
+        x_jupiter_array[i] = x_jup
+        y_jupiter_array[i] = y_jup
 
-        # Update Earth's position (Earth-Sun)
-        axEarthSun, ayEarthSun = acceleration(xEarth[i-1], yEarth[i-1], 0, 0, MSun)
-        vxEarth[i] = vxEarth[i-1] + axEarthSun * dt
-        vyEarth[i] = vyEarth[i-1] + ayEarthSun * dt
-        xEarth[i] = xEarth[i-1] + vxEarth[i-1] * dt
-        yEarth[i] = yEarth[i-1] + vyEarth[i-1] * dt
+        # Beräkna accelerationen för rymdskeppet baserat på både solen och Jupiter
+        ax_earth, ay_earth = acceleration(x[i-1], y[i-1], x_sun, y_sun, MSun)
+        ax_ship_jup, ay_ship_jup = acceleration(x[i-1], y[i-1], x_jup, y_jup, MJupiter)
 
-        # Update Jupiter's position (Jupiter-Sun)
-        axJupiterSun, ayJupiterSun = acceleration(xJupiter[i-1], yJupiter[i-1], 0, 0, MSun)
-        vxJupiter[i] = vxJupiter[i-1] + axJupiterSun * dt
-        vyJupiter[i] = vyJupiter[i-1] + ayJupiterSun * dt
-        xJupiter[i] = xJupiter[i-1] + vxJupiter[i-1] * dt
-        yJupiter[i] = yJupiter[i-1] + vyJupiter[i-1] * dt
+        # Total acceleration på rymdskeppet
+        total_ax = ax_earth + ax_ship_jup
+        total_ay = ay_earth + ay_ship_jup
+
+        # Uppdatera hastigheter (implicit)
+        vx[i] = vx[i-1] + total_ax * dt
+        vy[i] = vy[i-1] + total_ay * dt
+
+        # Uppdatera positioner för rymdskeppet
+        x[i] = x[i-1] + vx[i] * dt
+        y[i] = y[i-1] + vy[i] * dt
     
-    return xShip, yShip, xEarth, yEarth, xJupiter, yJupiter
+    return x, y, x_jupiter_array, y_jupiter_array
 
-# Run the simulation
-xShip, yShip, xEarth, yEarth, xJupiter, yJupiter = rungeKuttaSystem(xShip0, yShip0, vxShip0, vyShip0, xEarth0, yEarth0, vxEarth0, vyEarth0, xJupiter0, yJupiter0, vxJupiter0, vyJupiter0, dt, totalTime)
+# Simulera rörelsen
+x_trajectory, y_trajectory, x_jupiter_trajectory, y_jupiter_trajectory = eulerBackwardMethod(
+    x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupiter, y_jupiter, vx_jupiter, vy_jupiter
+)
 
-# Plotting
+# Plotta banorna
 plt.figure(figsize=(10, 10))
-plt.plot(xShip / AU, yShip / AU, label="Ship", color="blue", linewidth=0.5)
-plt.plot(xEarth / AU, yEarth / AU, label="Earth", color="green", linewidth=0.5)
-plt.plot(xJupiter / AU, yJupiter / AU, label="Jupiter", color="orange")
-plt.scatter(0, 0, color='yellow', label="Sun")
-plt.title("Trajectories of Spaceship, Earth, and Jupiter")
-plt.xlabel("x-position (AU)")
-plt.ylabel("y-position (AU)")
+plt.plot(x_trajectory, y_trajectory, label='Rymdskeppets bana', linewidth=0.5)
+plt.plot(x_jupiter_trajectory, y_jupiter_trajectory, color='orange', label='Jupiters bana', linewidth=0.5)
+plt.scatter(x_earth, y_earth, color='blue', s=50, label='Jorden')
+plt.scatter(x_jupiter_trajectory[-1], y_jupiter_trajectory[-1], color='orange', s=100, label='Jupiter (slutposition)')
+plt.scatter(x_sun, y_sun, color='yellow', s=200, label='Solen')
+plt.title("Rymdskeppets rörelse nära Jupiter med rörliga kroppar (Euler-Bakåt)")
+plt.xlabel("x-position (m)")
+plt.ylabel("y-position (m)")
+plt.axis('equal')
 plt.legend()
 plt.grid()
-plt.axis("equal")
-plt.xlim(-10, 10)  # Adjust x-axis limits to improve visualization
-plt.ylim(-10, 10)  # Adjust y-axis limits to improve visualization
 plt.show()

@@ -89,15 +89,38 @@ def rungeKuttaMethod(x0, y0, vx0, vy0, dt, totalTime):
     
     return x, y
 
+def symplecticEulerMethod(x0, y0, vx0, vy0, dt, totalTime):
+    n = int(totalTime / dt)
+    
+    # Preallocating
+    x = np.zeros(n)
+    y = np.zeros(n)
+    vx = np.zeros(n)
+    vy = np.zeros(n)
+    
+    # Initial values
+    x[0], y[0], vx[0], vy[0] = x0, y0, vx0, vy0
+    
+    # Simulating movement
+    for i in range(1, n):
+        ax, ay = acceleration(x[i-1], y[i-1])
+        vx[i] = vx[i-1] + ax * dt
+        vy[i] = vy[i-1] + ay * dt
+        x[i] = x[i-1] + vx[i] * dt
+        y[i] = y[i-1] + vy[i] * dt
+    
+    return x, y
+
 # Getting values and running our methods
 xEuler, yEuler = eulerMethod(x0, y0, vx0, vy0, dt, totalTime)
 xRK4, yRK4 = rungeKuttaMethod(x0, y0, vx0, vy0, dt, totalTime)
+xSymp, ySymp = symplecticEulerMethod(x0, y0, vx0, vy0, dt, totalTime)
 
 # Plotting the paths
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(12, 6))
 
 # Euler
-plt.subplot(1, 2, 1)
+plt.subplot(1, 3, 1)
 plt.plot(xEuler, yEuler, label='Path', linewidth=0.5)
 plt.scatter(xEuler[0], yEuler[0], color='blue', s=earthRadius*1e-6, label='Earth')
 plt.title("Euler-method")
@@ -108,12 +131,23 @@ plt.gca().add_artist(plt.Circle((0, 0), 6.96e9, color='yellow', label='Sun'))
 plt.legend(loc='upper right')
 
 # Runge-Kutta
-plt.subplot(1, 2, 2)
+plt.subplot(1, 3, 2)
 plt.plot(xRK4, yRK4, label='Path', linewidth=0.5)
 plt.scatter(xRK4[0], yRK4[0], color='blue', s=earthRadius*1e-6, label='Earth')
 plt.title("Runge-Kutta 4-method")
 plt.xlabel("x-position")
 plt.ylabel("y-position")
+plt.axis('equal')
+plt.gca().add_artist(plt.Circle((0, 0), 6.96e9, color='yellow', label='Sun'))
+plt.legend(loc='upper right')
+
+# Symplectic Euler
+plt.subplot(1, 3, 3)
+plt.plot(xSymp, ySymp, label='Path', linewidth=0.5)
+plt.scatter(xSymp[0], ySymp[0], color='blue', s=earthRadius*1e-6, label='Earth')
+plt.title("Symplectic Euler-method")
+plt.xlabel("x-position ")
+plt.ylabel("y-position ")
 plt.axis('equal')
 plt.gca().add_artist(plt.Circle((0, 0), 6.96e9, color='yellow', label='Sun'))
 plt.legend(loc='upper right')
@@ -130,11 +164,13 @@ def totalEnergy(x, y, vx, vy):
 # Getting the energy from our energy-function
 energiesEuler = totalEnergy(xEuler, yEuler, np.zeros_like(xEuler), np.zeros_like(yEuler))
 energiesRK4 = totalEnergy(xRK4, yRK4, np.zeros_like(xRK4), np.zeros_like(yRK4))
+energiesSymp = totalEnergy(xSymp, ySymp, np.zeros_like(xSymp), np.zeros_like(ySymp))    
 
 # Plotting how the energy varies by time
 plt.figure(figsize=(6, 6))
 plt.plot(energiesEuler, label='Total energy (Euler)', color='blue')
 plt.plot(energiesRK4, label='Total energy (Runge-Kutta)', color='red')
+plt.plot(energiesSymp, label='Total energy (Symplectic-Euler)', color='green')
 plt.title('Total energy over time')
 plt.xlabel('Timesteps')
 plt.ylabel('Energy (Joules)')
