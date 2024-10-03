@@ -1,23 +1,29 @@
 import math
 from decimal import Decimal, getcontext
 
-getcontext().prec = 100  # Öka precisionen för större intervall
+getcontext().prec = 100  # Ökad precision för långa intervall
 
 x = Decimal(0)
 y = Decimal(1)
 u = Decimal(0)
-h = Decimal(0.001)  # Steglängden
+h = Decimal(0.01)  # Steglängd
 tol = Decimal(1e-20)
-targetPi = Decimal(318 * math.pi)  # För att hitta roten vid 318π ≈ 1000
 
-# Systemet y'' = -y
+# Vi letar efter nollgenomgången nära 318π
+target_zero_crossings = 318
+zero_crossings = 0  # Räknare för antalet nollgenomgångar
+
+# Definiera systemet y'' = -y
 def dudx6(y, u):
     dydx = Decimal(u)    # y' = u
     dudx = -Decimal(y)   # y'' = -y
     return dydx, dudx
 
+# Tidigare värde på y för att hålla koll på nollgenomgångar
+prev_y = y
+
 while True:
-    # Runge-Kutta algoritm
+    # Runge-Kutta-algoritm
     k1 = dudx6(Decimal(y), Decimal(u))
     k2 = dudx6(Decimal(y) + Decimal(h) * Decimal(k1[0]) / Decimal(2), Decimal(u) + Decimal(h) * Decimal(k1[1]) / Decimal(2))
     k3 = dudx6(Decimal(y) + Decimal(h) * Decimal(k2[0]) / Decimal(2), Decimal(u) + Decimal(h) * Decimal(k2[1]) / Decimal(2))
@@ -28,20 +34,22 @@ while True:
     y = Decimal(y) + Decimal(h) * (Decimal(k1[0]) + Decimal(2) * Decimal(k2[0]) + Decimal(2) * Decimal(k3[0]) + Decimal(k4[0])) / Decimal(6)
     u = Decimal(u) + Decimal(h) * (Decimal(k1[1]) + Decimal(2) * Decimal(k2[1]) + Decimal(2) * Decimal(k3[1]) + Decimal(k4[1])) / Decimal(6)
 
-    # Kontrollera om y passerar 0 och vi är nära 318π
-    if y < 0 and abs(x - targetPi) < Decimal(1e-5):
-        approxPi = Decimal(2) * (Decimal(x) - Decimal(h))
-        print(approxPi)
-        print("Resultat för roten vid 318π:", approxPi, "±", abs(approxPi - Decimal(318 * math.pi)))
-        break
+    # Kontrollera nollgenomgång
+    if prev_y > 0 and y < 0 or y > 0 and prev_y < 0:  # Om vi passerar 0 från positiv till negativ eller tvärt om
+        zero_crossings += 1
+        print(f"Nollgenomgång nummer {zero_crossings} vid x ≈ {x}")
 
-    # Gör steg mindre om vi är nära roten
-    if y < 0:
-        # Återställ gamla värden
-        x = Decimal(x) - Decimal(h)
-        y = Decimal(y) - Decimal(h) * (Decimal(k1[0]) + Decimal(2) * Decimal(k2[0]) + Decimal(2) * Decimal(k3[0]) + Decimal(k4[0])) / Decimal(6)
-        u = Decimal(u) - Decimal(h) * (Decimal(k1[1]) + Decimal(2) * Decimal(k2[1]) + Decimal(2) * Decimal(k3[1]) + Decimal(k4[1])) / Decimal(6)
+        if zero_crossings >= 315:
+            h = 0.00001
 
-        # Gör steglängden h mindre
-        h /= Decimal(2)
-        continue
+        #print(f"Uträknat x ≈ {x}, bör vara ")
+
+        # När vi når nollgenomgången nära 318π
+        if zero_crossings >= target_zero_crossings:
+            approxPi = ((Decimal(x) - Decimal(h)))/Decimal(318)  # Approximation av 318π
+            exact_pi = Decimal(math.pi)  # Exakta värdet för 318π
+            print(f"Uppskattat värde för roten vid 318π: {approxPi} ± {abs(approxPi - exact_pi)}")
+            break
+
+    # Uppdatera prev_y för att hålla koll på nollgenomgångarna
+    prev_y = y

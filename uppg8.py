@@ -6,31 +6,34 @@ G = 6.67430e-11      # Gravitational constant
 MSun = 1.989e30      # Mass of the Sun
 MEarth = 5.972e24    # Mass of Earth
 MJupiter = 1.898e27  # Mass of Jupiter
-MShip = 1000         # Mass of the spaceship
 
-AU = 1.496e11             # Astronomical unit
-earthRadius = 6.371e6     # Earths radius
-jupiterRadius = 7.1492e7  # Jupiters radius
+AU = 1.496e11        # Astronomical unit (meters)
+earthRadius = 6.371e6  # Earth's radius (meters)
+jupiterOrbit = 5.2 * AU  # Average distance of Jupiter from the Sun
 
-# Initial positions
+# Initial positions and velocities
 xEarth0 = 1 * AU
 yEarth0 = 0
 vxEarth0 = 0
-vyEarth0 = 29780  # Earths velocity around the Sun
+vyEarth0 = 29780  # Earth's velocity around the Sun (m/s)
 
-xJupiter0 = 5.2 * AU
+xJupiter0 = jupiterOrbit
 yJupiter0 = 0
 vxJupiter0 = 0
-vyJupiter0 = 13720  # Jupiters velocity around the Sun
+vyJupiter0 = 13720  # Jupiter's velocity around the Sun (m/s)
 
-xShip0 = xEarth0                # Ship starts near Earth
-yShip0 = earthRadius + 400000   # 400 km above Earths surface
-vxShip0 = -15000                # Give ship an initial velocity towards Jupiter
-vyShip0 = vyEarth0              # Small delta-v to escape Earth
+# Spaceship starts in low Earth orbit (400 km above Earth's surface)
+xShip0 = xEarth0
+yShip0 = earthRadius + 400000  # 400 km above the Earth's surface
+
+# Set the initial velocity for a stable low Earth orbit
+v_low_earth_orbit = np.sqrt(G * MEarth / (earthRadius + 400000))  # Orbital speed for LEO
+vxShip0 = v_low_earth_orbit  # Add this speed for a circular orbit around Earth
+vyShip0 = vxShip0/2  # No vertical speed
 
 # Time step
-dt = 60 * 30                             # 30 min in seconds
-totalTime = 100 * 365.25 * 24 * 60 * 60  # 100 years in seconds
+dt = 30* 60  # 1 minute time step
+totalTime = 3 * 365.25 * 24 * 60 * 60  # Simulate for 30 years in seconds
 
 # Function to calculate the acceleration due to gravity
 def acceleration(x, y, xOther, yOther, MOther):
@@ -39,7 +42,8 @@ def acceleration(x, y, xOther, yOther, MOther):
     ay = -G * MOther * (y - yOther) / r**3
     return ax, ay
 
-# Runge-Kutta 4th order method for system of multiple objects
+
+# Runge-Kutta integration for multiple bodies
 def rungeKuttaSystem(xShip0, yShip0, vxShip0, vyShip0, xEarth0, yEarth0, vxEarth0, vyEarth0, xJupiter0, yJupiter0, vxJupiter0, vyJupiter0, dt, totalTime):
     nSteps = int(totalTime / dt)
     
@@ -108,9 +112,11 @@ plt.plot(xEarth / AU, yEarth / AU, label="Earth", color="green", linewidth=0.5)
 plt.plot(xJupiter / AU, yJupiter / AU, label="Jupiter", color="orange")
 plt.scatter(0, 0, color='yellow', label="Sun")
 plt.title("Trajectories of Spaceship, Earth, and Jupiter")
-plt.xlabel("x-position")
-plt.ylabel("y-position")
+plt.xlabel("x-position (AU)")
+plt.ylabel("y-position (AU)")
 plt.legend()
 plt.grid()
 plt.axis("equal")
+plt.xlim(-10, 10)  # Adjust x-axis limits to improve visualization
+plt.ylim(-10, 10)  # Adjust y-axis limits to improve visualization
 plt.show()
