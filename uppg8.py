@@ -1,29 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Constants
-G = 6.67430e-11  # Gravitational constant
-MSun = 1.989e30  # Mass of the Sun
-MJupiter = 1.898e27  # Mass of Jupiter
-MEarth = 5.972e24  # Mass of Earth
-AU = 1.496e11  # 1 AU in meters
+# Konstant
+G = 6.67430e-11  # Gravitationskonstant
+MSun = 1.989e30  # Solens massa
+MJupiter = 1.898e27  # Jupiters massa
+MEarth = 5.972e24  # Jordens massa
+AU = 1.496e11  # 1 AU i meter
 
-# Initial positions and velocities
-x_sun, y_sun = 0, 0  # Sun's position
-x_jupiter, y_jupiter = 5.2 * AU, 0  # Jupiter's initial position
-vx_jupiter, vy_jupiter = 0, 13000  # Jupiter's velocity (about 13 km/s)
-x_earth, y_earth = AU, 0  # Earth's position
-vx_earth, vy_earth = 0, 29780  # Earth's velocity
+# Initiala positioner och hastigheter
+x_sun, y_sun = 0, 0  # Solens position
+x_jupiter, y_jupiter = 5.2 * AU, 0  # Jupiters position
+vx_jupiter, vy_jupiter = 0, 13000  # Jupiters hastighet (ca 13 km/s)
+x_earth, y_earth = AU, 0  # Jordens position
+vx_earth, vy_earth = 0, 29780  # Jordens hastighet
 
-# Rocketship's initial values
-x0 = x_earth + 400000  # Slightly outside Earth's position
-y0 = 400000  # Slightly above the x-axis
-vx0 = 3.6e4  # Initial velocity towards Jupiter
-vy0 = 0  # Initial velocity to simulate slingshot effect
+# Rymdskeppets initiala värden
+x0 = x_earth + 1e7  # Lite utanför jordens position
+y0 = 1e6  # Lite ovanför x-axeln
+constant = 1.1
+vx0 = constant * 3.28e4  # Start hastighet
+vy0 = constant * 1.99e4  # Initiera hastighet för att simuleras
 
-# Time step and total time
-dt = 60 * 30  # 30 hour in seconds
-totalTime = 1 * 365.25 * 24 * 60 * 60  # 3 years in seconds
+# Tidssteg och total tid
+dt = 60 * 30  # 1 timme i sekunder
+totalTime = 1.2 * 365.25 * 24 * 60 * 60  # 5 år i sekunder
 
 def acceleration(x, y, x_target, y_target, mass_target):
     r = np.sqrt((x - x_target)**2 + (y - y_target)**2)
@@ -31,89 +32,74 @@ def acceleration(x, y, x_target, y_target, mass_target):
     ay = -G * mass_target * (y - y_target) / r**3
     return ax, ay
 
-# Euler-Backward method with moving bodies
-def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, MEarth, x_jupiter, y_jupiter, vx_jupiter, vy_jupiter, x_earth, y_earth, vx_earth, vy_earth):
+# Euler-Bakåt metod med rörliga kroppar
+def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupiter, y_jupiter, vx_jupiter, vy_jupiter):
     nSteps = int(totalTime / dt)
     x = np.zeros(nSteps)
     y = np.zeros(nSteps)
     vx = np.zeros(nSteps)
     vy = np.zeros(nSteps)
     
-    # Jupiter's position and velocity
+    # Jupiters position och hastighet
     x_jup = x_jupiter
     y_jup = y_jupiter
     vx_jup = vx_jupiter
     vy_jup = vy_jupiter
 
-    # Create arrays for Jupiter's and Earth's positions
+    # Skapa arrayer för Jupiters positioner
     x_jupiter_array = np.zeros(nSteps)
     y_jupiter_array = np.zeros(nSteps)
-    x_earth_array = np.zeros(nSteps)
-    y_earth_array = np.zeros(nSteps)
 
-    # Initialization of positions and velocities
+    # Initialisering av positioner och hastigheter
     x[0], y[0], vx[0], vy[0] = x0, y0, vx0, vy0
     x_jupiter_array[0], y_jupiter_array[0] = x_jup, y_jup
-    x_earth_array[0], y_earth_array[0] = x_earth, y_earth
 
-    # Simulate motion
+    # Simulera rörelse
     for i in range(1, nSteps):
-        # Update Jupiter's position and calculate its gravitational influence
+        # Beräkna accelerationen för Jupiters position
         ax_jup, ay_jup = acceleration(x_jup, y_jup, x_sun, y_sun, MSun)
+
+        # Uppdatera Jupiters hastighet och position
         vx_jup += ax_jup * dt
         vy_jup += ay_jup * dt
         x_jup += vx_jup * dt
         y_jup += vy_jup * dt
 
-        # Save Jupiter's position in arrays
+        # Spara Jupiters position i arrays
         x_jupiter_array[i] = x_jup
         y_jupiter_array[i] = y_jup
 
-        # Calculate Earth's position and update its velocity (orbiting the Sun)
-        ax_earth, ay_earth = acceleration(x_earth_array[i-1], y_earth_array[i-1], x_sun, y_sun, MSun)
-        vx_earth += ax_earth * dt
-        vy_earth += ay_earth * dt
-        x_earth += vx_earth * dt
-        y_earth += vy_earth * dt
-
-        # Save Earth's position in arrays
-        x_earth_array[i] = x_earth
-        y_earth_array[i] = y_earth
-
-        # Calculate acceleration for the rocketship based on the Sun, Earth, and Jupiter
-        ax_ship_sun, ay_ship_sun = acceleration(x[i-1], y[i-1], x_sun, y_sun, MSun)
-        ax_ship_earth, ay_ship_earth = acceleration(x[i-1], y[i-1], x_earth, y_earth, MEarth)
+        # Beräkna accelerationen för rymdskeppet baserat på både solen och Jupiter
+        ax_earth, ay_earth = acceleration(x[i-1], y[i-1], x_sun, y_sun, MSun)
         ax_ship_jup, ay_ship_jup = acceleration(x[i-1], y[i-1], x_jup, y_jup, MJupiter)
 
-        # Total acceleration on the rocketship, ensuring correct directionality
-        total_ax = ax_ship_sun + ax_ship_earth + ax_ship_jup  
-        total_ay = ay_ship_sun + ay_ship_earth + ay_ship_jup  
+        # Total acceleration på rymdskeppet
+        total_ax = ax_earth + ax_ship_jup
+        total_ay = ay_earth + ay_ship_jup
 
-        print(y_jup)
-
-        # Update velocities (implicit)
+        # Uppdatera hastigheter (implicit)
         vx[i] = vx[i-1] + total_ax * dt
-        vy[i] = vy[i-1] + total_ay * dt 
+        vy[i] = vy[i-1] + total_ay * dt
 
-        # Update positions for the rocketship
+        # Uppdatera positioner för rymdskeppet
         x[i] = x[i-1] + vx[i] * dt
         y[i] = y[i-1] + vy[i] * dt
     
-    return x, y, x_jupiter_array, y_jupiter_array, x_earth_array, y_earth_array
+    return x, y, x_jupiter_array, y_jupiter_array
 
-# Simulate the motion
-x_trajectory, y_trajectory, x_jupiter_trajectory, y_jupiter_trajectory, x_earth_trajectory, y_earth_trajectory = eulerBackwardMethod(
-    x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, MEarth, x_jupiter, y_jupiter, vx_jupiter, vy_jupiter, x_earth, y_earth, vx_earth, vy_earth
+# Simulera rörelsen
+x_trajectory, y_trajectory, x_jupiter_trajectory, y_jupiter_trajectory = eulerBackwardMethod(
+    x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupiter, y_jupiter, vx_jupiter, vy_jupiter
 )
 
-# Plot the trajectories
+# Plotta banorna
 plt.figure(figsize=(10, 10))
-plt.plot(x_trajectory, y_trajectory, label='Rocketship trajectory', linewidth=0.5)
-plt.plot(x_jupiter_trajectory, y_jupiter_trajectory, color='orange', label='Jupiter trajectory', linewidth=0.5)
-plt.plot(x_earth_trajectory, y_earth_trajectory, color='green', label='Earth trajectory', linewidth=0.5)
-plt.scatter(x_sun, y_sun, color='yellow', s=200, label='Sun')
-plt.scatter(x_jupiter_trajectory[-1], y_jupiter_trajectory[-1], color='orange', s=100, label='Jupiter (end position)')
-plt.title("Rocketship Movement Near Jupiter with Moving Bodies (Euler-Backward)")
+plt.plot(x_trajectory, y_trajectory, label='Rymdskeppets bana', linewidth=0.5)
+plt.plot(x_jupiter_trajectory, y_jupiter_trajectory, color='orange', label='Jupiters bana', linewidth=0.5)
+plt.scatter(x_earth, y_earth, color='blue', s=50, label='Jorden')
+plt.scatter(x_jupiter_trajectory[-1], y_jupiter_trajectory[-1], color='orange', s=100, label='Jupiter (slutposition)')
+plt.scatter(x_sun, y_sun, color='yellow', s=200, label='Solen')
+plt.title("Rymdskeppets rörelse nära Jupiter med rörliga kroppar (Euler-Bakåt)")
 plt.xlabel("x-position (m)")
 plt.ylabel("y-position (m)")
 plt.axis('equal')

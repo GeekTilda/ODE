@@ -1,4 +1,3 @@
-import math
 from decimal import Decimal, getcontext
 
 getcontext().prec = 100 
@@ -39,13 +38,13 @@ while True:
         zeroCrossings += 1
         print(f"Nollgenomgång nummer {zeroCrossings} vid x ≈ {x}")
 
-        if zeroCrossings >= 315:
-            h = 0.00001
+        if zeroCrossings >= 316:
+            h = Decimal(0.00001)
 
         # Zero crossings close to 318π
         if zeroCrossings >= targetZeroCrossings:
             approxPi = ((Decimal(x) - Decimal(h)))/Decimal(318)  # Approximation of 318π
-            exactPi = Decimal(math.pi)  # Exakt value for 318π
+            exactPi = Decimal("3.14159265358979323846")  # Exakt value for 318π
             print(f"Uppskattat värde för roten vid 318π: {approxPi} ± {abs(approxPi - exactPi)}")
             break
 
