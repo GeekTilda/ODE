@@ -18,13 +18,12 @@ vx_earth, vy_earth = 0, 29780  # Jordens hastighet
 # Rymdskeppets initiala värden
 x0 = x_earth + 1e7  # Lite utanför jordens position
 y0 = 1e6  # Lite ovanför x-axeln
-constant = 1.1
-vx0 = constant * 3.28e4  # Start hastighet
-vy0 = constant * 1.99e4  # Initiera hastighet för att simuleras
+vx0 = 3.286e4  # Start hastighet
+vy0 = 1.986e4  # Initiera hastighet för att simuleras
 
 # Tidssteg och total tid
 dt = 60 * 30  # 1 timme i sekunder
-totalTime = 1.2 * 365.25 * 24 * 60 * 60  # 5 år i sekunder
+totalTime = 20 * 365.25 * 24 * 60 * 60  # 5 år i sekunder
 
 def acceleration(x, y, x_target, y_target, mass_target):
     r = np.sqrt((x - x_target)**2 + (y - y_target)**2)
