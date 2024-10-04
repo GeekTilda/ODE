@@ -1,31 +1,53 @@
-import math
 from decimal import Decimal, getcontext
 
-getcontext().prec = 25
 
-def euler(x, yVec, h):
-    y = [None]*2
-    y[0] = yVec[0] + h*yVec[1]
-    y[1] = yVec[1] - h*yVec[0]
-    x = x + h
-    return x,y
+getcontext().prec = 50  # How many decimals we want
 
-def main():
-    itertation = 1
-    piApprox = Decimal(3)
-    while abs(piApprox - Decimal(math.pi)) > 1e-13:
-        h = Decimal(1/(2**itertation))
-        yVec = [Decimal(1),Decimal(0)]
-        x = Decimal(0)
-        while yVec[0] > 0:
-            prevX = x
-            prevYVec = yVec
-            x,yVec = euler(x,yVec,h)
-        k = (prevYVec[0] - yVec[0]) / (prevX-x)
-        m = yVec[0] - k*x
-        piApprox = -2*m/k
-        print(piApprox)
-        itertation += 1
-    print(abs(Decimal(math.pi)-piApprox))
 
-main()
+x = Decimal(0)
+y = Decimal(1)
+u = Decimal(0)
+h = Decimal(0.00001)
+tol = Decimal(1e-20)
+
+
+# Represents the system y'' = -y
+def dudx6(y, u):
+    dydx = Decimal(u)    # y' = u
+    dudx = -Decimal(y)   # y'' = -y
+    return dydx, dudx
+
+
+while True:
+    # Saving our previous solution
+    #xPrev = x
+    #yPrev = y
+    #uPrev = u
+
+    # Runge-Kutta algorithm
+    k1 = dudx6(Decimal(y), Decimal(u))
+    k2 = dudx6(Decimal(y) + Decimal(h) * Decimal(k1[0]) / Decimal(2), Decimal(u) + Decimal(h) * Decimal(k1[1]) / Decimal(2))
+    k3 = dudx6(Decimal(y) + Decimal(h) * Decimal(k2[0]) / Decimal(2), Decimal(u) + Decimal(h) * Decimal(k2[1]) / Decimal(2))
+    k4 = dudx6(Decimal(y) + Decimal(h) * Decimal(k3[0]), Decimal(u) + Decimal(h) * Decimal(k3[1]))
+
+    # Updating x, y and u
+    x = Decimal(x) + Decimal(h)
+    y = Decimal(y) + Decimal(h) * (Decimal(k1[0]) + Decimal(2) * Decimal(k2[0]) + Decimal(2) * Decimal(k3[0]) + Decimal(k4[0])) / Decimal(6)
+    u = Decimal(u) + Decimal(h) * (Decimal(k1[1]) + Decimal(2) * Decimal(k2[1]) + Decimal(2) * Decimal(k3[1]) + Decimal(k4[1])) / Decimal(6)
+
+    # Checking when y passes 0
+    if y < 0:
+        approxPi = Decimal(2) * (Decimal(x) - Decimal(h))
+
+        if abs(Decimal(approxPi) - Decimal("3.14159265358979323846")) < tol:
+            print("Converged result: ", approxPi,"±",abs(approxPi - Decimal("3.14159265358979323846")))
+            break
+        
+        # Returning to old values
+        x = Decimal(x) - Decimal(h)
+        y = Decimal(y) - Decimal(h) * (Decimal(k1[0]) + Decimal(2) * Decimal(k2[0]) + Decimal(2) * Decimal(k3[0]) + Decimal(k4[0])) / Decimal(6)
+        u = Decimal(u) - Decimal(h) * (Decimal(k1[1]) + Decimal(2) * Decimal(k2[1]) + Decimal(2) * Decimal(k3[1]) + Decimal(k4[1])) / Decimal(6)
+
+        # Making our steps 1/2 as big
+        h /= Decimal(2)
+        continue
