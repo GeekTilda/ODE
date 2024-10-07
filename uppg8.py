@@ -22,8 +22,8 @@ vx0 = 3.286e4  # Start hastighet
 vy0 = 1.986e4  # Initiera hastighet för att simuleras
 
 # Tidssteg och total tid
-dt = 60 * 30  # 1 timme i sekunder
-totalTime = 20 * 365.25 * 24 * 60 * 60  # 5 år i sekunder
+dt = 60 * 30  # 30 minuter i sekunder
+totalTime = 10 * 365.25 * 24 * 60 * 60  # 10 år i sekunder
 
 def acceleration(x, y, x_target, y_target, mass_target):
     r = np.sqrt((x - x_target)**2 + (y - y_target)**2)
@@ -38,7 +38,10 @@ def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupit
     y = np.zeros(nSteps)
     vx = np.zeros(nSteps)
     vy = np.zeros(nSteps)
-    
+
+    time = np.zeros(nSteps)
+    sunVelocity = np.zeros(nSteps)
+
     # Jupiters position och hastighet
     x_jup = x_jupiter
     y_jup = y_jupiter
@@ -53,8 +56,11 @@ def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupit
     x[0], y[0], vx[0], vy[0] = x0, y0, vx0, vy0
     x_jupiter_array[0], y_jupiter_array[0] = x_jup, y_jup
 
+    time[0] = 0
+
     # Simulera rörelse
     for i in range(1, nSteps):
+        time[i] = time[i-1] + dt
         # Beräkna accelerationen för Jupiters position
         ax_jup, ay_jup = acceleration(x_jup, y_jup, x_sun, y_sun, MSun)
 
@@ -84,15 +90,28 @@ def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupit
         x[i] = x[i-1] + vx[i] * dt
         y[i] = y[i-1] + vy[i] * dt
     
-    return x, y, x_jupiter_array, y_jupiter_array
+        # Hastigheten som solen påverkar rymdskeppet med
+        sunVelocity[i] = np.sqrt(2*G*MSun/np.sqrt(x[i]**2 + y[i]**2))
+
+    return x, y, x_jupiter_array, y_jupiter_array, vx, vy, time, sunVelocity
 
 # Simulera rörelsen
-x_trajectory, y_trajectory, x_jupiter_trajectory, y_jupiter_trajectory = eulerBackwardMethod(
+x_trajectory, y_trajectory, x_jupiter_trajectory, y_jupiter_trajectory, vx, vy, time, sunVelocity = eulerBackwardMethod(
     x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, x_jupiter, y_jupiter, vx_jupiter, vy_jupiter
 )
 
-# Plotta banorna
+# Hastighet över tid
 plt.figure(figsize=(10, 10))
+plt.plot(time, np.sqrt(vx**2 + vy**2), label='Rymdskeppets hastighet över tid')
+plt.plot(time, sunVelocity, label='Solens påverkan på skeppet')
+plt.plot()
+plt.xlabel("Tid")
+plt.ylabel("Hastighet")
+
+# Plotta banorna
+plt.legend()
+plt.grid()
+plt.show()
 plt.plot(x_trajectory, y_trajectory, label='Rymdskeppets bana', linewidth=0.5)
 plt.plot(x_jupiter_trajectory, y_jupiter_trajectory, color='orange', label='Jupiters bana', linewidth=0.5)
 plt.scatter(x_earth, y_earth, color='blue', s=50, label='Jorden')

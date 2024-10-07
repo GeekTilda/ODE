@@ -20,17 +20,19 @@ def main():
     n = 1240    # "Explodes at" 125 :)
     x,y = rungeKutta(dudx4,x0,y0,h,n)   #Uppg. 4
     
-    plt.plot(x, y)
-    plt.show()
+    #plt.plot(x, y)
+    #plt.show()
     
     N = 81
     x0 = 0
     y0 = N
     xend = 512    # 2^k : 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 (Overflow for matplotlib)
-    h = 0.1
+    expvarde = N* np.exp(xend)
+    h = 0.0001
     n = int(xend/h)
     x,y = rungeKutta(dudx5,x0,y0,h,n)   # Uppg. 5
-    #print(y[-1])
+    print(y[-1])
+    print(abs(y[-1] - expvarde))
 
     #plt.plot(x, y)
     #plt.show()
