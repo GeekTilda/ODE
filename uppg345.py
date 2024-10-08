@@ -4,8 +4,8 @@ from rungeKutta import rungeKutta
 
 def main():
     
-    x0 = -1
-    y0 = -1
+    x0 = 0
+    y0 = 1e-6
     h = 0.1
     n = 40
     x,y = rungeKutta(dudx3,x0,y0,h,n)   # Uppg.3
@@ -26,7 +26,7 @@ def main():
     N = 81
     x0 = 0
     y0 = N
-    xend = 512    # 2^k : 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 (Overflow for matplotlib)
+    xend = 1    # 2^k : 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 (Overflow for matplotlib)
     expvarde = N* np.exp(xend)
     h = 0.0001
     n = int(xend/h)
