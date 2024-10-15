@@ -17,7 +17,7 @@ def main():
     x0 = 0
     y0 = N/100
     h = 0.01
-    n = 1240    # "Explodes at" 125 :)
+    n = 1240    # "Explodes at" 1250 :)
     x,y = rungeKutta(dudx4,x0,y0,h,n)   #Uppg. 4
     
     #plt.plot(x, y)

@@ -23,7 +23,7 @@ vy0 = 1.986e4
 
 # Timesteps and total time
 dt = 60 * 30  # 30 minutes in seconds
-totalTime = 20 * 365.25 * 24 * 60 * 60  # 10 years in seconds
+totalTime = 20 * 365.25 * 24 * 60 * 60  # 20 years in seconds
 
 def acceleration(x, y, xTarget, yTarget, massTarget):
     r = np.sqrt((x - xTarget)**2 + (y - yTarget)**2)
@@ -33,7 +33,7 @@ def acceleration(x, y, xTarget, yTarget, massTarget):
 
 # Euler-backwards
 def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, xJupiter, yJupiter, vxJupiter, vyJupiter):
-    #Pre allocating and setting initial values
+    # Pre allocating and setting initial values
     nSteps = int(totalTime / dt)
     x = np.zeros(nSteps)
     y = np.zeros(nSteps)
@@ -42,7 +42,6 @@ def eulerBackwardMethod(x0, y0, vx0, vy0, dt, totalTime, MSun, MJupiter, xJupite
 
     time = np.zeros(nSteps)
     sunVelocity = np.zeros(nSteps)
-
 
     xJup = xJupiter
     yJup = yJupiter

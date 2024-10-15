@@ -50,38 +50,39 @@ def rungeKuttaMethod(x0, y0, vx0, vy0, dt, totalTime):
     vx = np.zeros(nSteps)
     vy = np.zeros(nSteps)
     
+    # Initial conditions
     x[0], y[0], vx[0], vy[0] = x0, y0, vx0, vy0
     
     for i in range(1, nSteps):
-        # Calculate k1 values
+        # Step 1: k1 for velocity and position
         ax1, ay1 = acceleration(x[i-1], y[i-1])
         k1vx = ax1 * dt
         k1vy = ay1 * dt
         k1x = vx[i-1] * dt
         k1y = vy[i-1] * dt
 
-        # Calculate k2 values
+        # Step 2: k2 for velocity and position (update with k1/2)
         ax2, ay2 = acceleration(x[i-1] + 0.5 * k1x, y[i-1] + 0.5 * k1y)
         k2vx = ax2 * dt
         k2vy = ay2 * dt
         k2x = (vx[i-1] + 0.5 * k1vx) * dt
         k2y = (vy[i-1] + 0.5 * k1vy) * dt
 
-        # Calculate k3 values
+        # Step 3: k3 for velocity and position (update with k2/2)
         ax3, ay3 = acceleration(x[i-1] + 0.5 * k2x, y[i-1] + 0.5 * k2y)
         k3vx = ax3 * dt
         k3vy = ay3 * dt
         k3x = (vx[i-1] + 0.5 * k2vx) * dt
         k3y = (vy[i-1] + 0.5 * k2vy) * dt
 
-        # Calculate k4 values
+        # Step 4: k4 for velocity and position (update with k3)
         ax4, ay4 = acceleration(x[i-1] + k3x, y[i-1] + k3y)
         k4vx = ax4 * dt
         k4vy = ay4 * dt
         k4x = (vx[i-1] + k3vx) * dt
         k4y = (vy[i-1] + k3vy) * dt
 
-        # Update positions and velocities
+        # Now use the weighted average of k1, k2, k3, k4 for the final update
         vx[i] = vx[i-1] + (k1vx + 2*k2vx + 2*k3vx + k4vx) / 6
         vy[i] = vy[i-1] + (k1vy + 2*k2vy + 2*k3vy + k4vy) / 6
         x[i] = x[i-1] + (k1x + 2*k2x + 2*k3x + k4x) / 6
@@ -162,9 +163,10 @@ def totalEnergy(x, y, vx, vy):
     return kineticEnergy + potentialEnergy
 
 # Getting the energy from our energy-function
-energiesEuler = totalEnergy(xEuler, yEuler, np.zeros_like(xEuler), np.zeros_like(yEuler))
-energiesRK4 = totalEnergy(xRK4, yRK4, np.zeros_like(xRK4), np.zeros_like(yRK4))
-energiesSymp = totalEnergy(xSymp, ySymp, np.zeros_like(xSymp), np.zeros_like(ySymp))    
+energiesEuler = totalEnergy(xEuler, yEuler, vx0, vy0)
+energiesRK4 = totalEnergy(xRK4, yRK4, vx0, vy0)
+energiesSymp = totalEnergy(xSymp, ySymp, vx0, vy0)
+
 
 # Plotting how the energy varies by time
 plt.figure(figsize=(6, 6))
