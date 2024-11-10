@@ -1,11 +1,11 @@
 from decimal import Decimal, getcontext
 
-getcontext().prec = 100
+getcontext().prec = 20
 
 x = Decimal(0)
 y = Decimal(1)
 u = Decimal(0)
-h = Decimal(0.01)
+h = Decimal(0.001)
 tol = Decimal(1e-4)
 
 # Looking for the zero-crossing close to 318π
@@ -37,11 +37,11 @@ while True:
     if prevY > 0 and y < 0 or y > 0 and prevY < 0:  # If we pass zero 
         zeroCrossings += 1
         print(f"Nollgenomgång nummer {zeroCrossings} vid x ≈ {x}")
-        approxPi = ((Decimal(x) - Decimal(h)))/Decimal(zeroCrossings)  # Approximation of 318π
+        approxPi = ((Decimal(x)))/Decimal(zeroCrossings)  # Approximation of 318π
         print(f"Approximerad pi {approxPi}")
 
-        if zeroCrossings >= 316:
-            h = Decimal(0.00001)  # Make the step-length shorter when we get close to 318π
+        #if zeroCrossings >= 316:
+        #    h = Decimal(0.00001)  # Make the step-length shorter when we get close to 318π
 
         if zeroCrossings >= targetZeroCrossings:
             approxPi = ((Decimal(x) - Decimal(h)))/Decimal(318)  # Approximation of 318π
